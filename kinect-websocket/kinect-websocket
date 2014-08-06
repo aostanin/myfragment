@@ -21,6 +21,9 @@ if (!program.fifo) {
 var wss = new WebSocketServer({host: program.interface, port: program.port});
 wss.on('connection', function(ws) {
   console.log('New connection');
+  ws.on('error', function() {
+    console.log(arguments);
+  });
 });
 wss.on('error', function() {
   console.log(arguments);

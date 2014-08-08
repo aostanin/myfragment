@@ -7,19 +7,37 @@
 //
 
 #import "FRGViewController.h"
-#import <GLKit/GLKit.h>
+#import <Accelerate/Accelerate.h>
 #import <MBProgressHUD.h>
 #import <SRWebSocket.h>
+
 #include <arpa/inet.h>
 #include "lz4.h"
 
-@interface FRGViewController () <GLKViewDelegate, NSNetServiceDelegate, NSNetServiceBrowserDelegate, SRWebSocketDelegate>
+static const GLsizei kDepthWidth  = 640;
+static const GLsizei kDepthHeight = 480;
 
-@property (weak, nonatomic) IBOutlet GLKView *glView;
+static const GLfloat kVertices[] = {
+     1, -1,  1,
+     1,  1,  1,
+    -1,  1,  1,
+    -1, -1,  1
+};
+
+static const GLubyte kIndices[] = {
+    0, 1, 2,
+    2, 3, 0
+};
+
+@interface FRGViewController () <GLKViewControllerDelegate, NSNetServiceDelegate, NSNetServiceBrowserDelegate, SRWebSocketDelegate>
+
 @property (weak, nonatomic) IBOutlet UILabel *countdownLabel;
 @property (weak, nonatomic) IBOutlet UIView *flashView;
 
+@property (assign, nonatomic) GLuint programObject;
+@property (assign, nonatomic) GLuint vertexArray;
 @property (assign, nonatomic) GLuint depthTexture;
+@property (assign, nonatomic) GLuint depthTextureUniform;
 
 @property (strong, nonatomic) NSNetServiceBrowser *kinectWebSocketServiceBrowser;
 @property (strong, nonatomic) NSNetService *kinectWebSocketService;
@@ -35,7 +53,12 @@
     self.kinectWebSocketServiceBrowser = [[NSNetServiceBrowser alloc] init];
     self.kinectWebSocketServiceBrowser.delegate = self;
 
-    self.glView.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+    self.preferredFramesPerSecond = 30;
+
+    GLKView *glView = (GLKView *)self.view;
+    glView.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+
+    [self initializeOpenGL];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -49,15 +72,13 @@
 {
     [super viewDidLayoutSubviews];
 
-    [self.glView setNeedsDisplay];
+    [self updateScreenSize];
 }
 
 #pragma mark - Actions
 
 - (IBAction)viewTapped:(id)sender
 {
-    NSLog(@"TAP!");
-
     self.countdownLabel.text = @"3";
     self.countdownLabel.hidden = NO;
     self.countdownLabel.alpha = 0;
@@ -127,12 +148,146 @@
 
 #pragma mark - Graphics
 
+- (GLuint)loadShaderWithSource:(NSString *)shaderSource type:(GLenum)type
+{
+    GLuint shader = glCreateShader(type);
+    GLint compiled;
+
+    if (!shader)
+        return 0;
+
+    const char *source = shaderSource.UTF8String;
+    glShaderSource(shader, 1, &source, NULL);
+    glCompileShader(shader);
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
+
+    if (!compiled) {
+        GLint infoLength;
+        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLength);
+
+        if (infoLength > 0) {
+            char *infoLog = malloc(infoLength);
+            glGetShaderInfoLog(shader, infoLength, NULL, infoLog);
+            NSLog(@"Failed compiling shader:\n%s", infoLog);
+            free(infoLog);
+        }
+
+        glDeleteShader(shader);
+        return 0;
+    }
+
+    return shader;
+}
+
+- (GLuint)compileAndLinkProgramWithVertexShaderPath:(NSString *)vertexShaderPath fragmentShaderPath:(NSString *)fragmentShaderPath
+{
+    NSString *vertexShaderSource = [NSString stringWithContentsOfFile:vertexShaderPath encoding:NSUTF8StringEncoding error:nil];
+    NSString *fragmentShaderSource = [NSString stringWithContentsOfFile:fragmentShaderPath encoding:NSUTF8StringEncoding error:nil];
+
+    GLuint vertexShader = [self loadShaderWithSource:vertexShaderSource type:GL_VERTEX_SHADER];
+    GLuint fragmentShader = [self loadShaderWithSource:fragmentShaderSource type:GL_FRAGMENT_SHADER];
+
+    GLuint programObject = glCreateProgram();
+    glAttachShader(programObject, vertexShader);
+    glAttachShader(programObject, fragmentShader);
+
+    glBindAttribLocation(programObject, GLKVertexAttribPosition, "position");
+
+    GLint linked;
+    glLinkProgram(programObject);
+    glGetProgramiv(programObject, GL_LINK_STATUS, &linked);
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    if (!linked) {
+        GLint infoLength;
+        glGetProgramiv(programObject, GL_INFO_LOG_LENGTH, &infoLength);
+
+        if (infoLength > 0) {
+            char *infoLog = malloc(infoLength);
+            glGetProgramInfoLog(shadow, infoLength, NULL, infoLog);
+            NSLog(@"Failed linking program:\n%s", infoLog);
+            free(infoLog);
+        }
+
+        glDeleteShader(programObject);
+        return 0;
+    }
+
+    return programObject;
+}
+
+- (void)initializeOpenGL
+{
+    GLKView *glView = (GLKView *)self.view;
+    [EAGLContext setCurrentContext:glView.context];
+
+    self.programObject = [self compileAndLinkProgramWithVertexShaderPath:[[NSBundle mainBundle] pathForResource:@"shader" ofType:@"vert"] fragmentShaderPath:[[NSBundle mainBundle] pathForResource:@"shader" ofType:@"frag"]];
+
+    if (!self.programObject)
+        return;
+
+    glClearColor(0.8f, 0.8f, 1.0f, 1.0f);
+
+    glGenVertexArraysOES(1, &_vertexArray);
+    glBindVertexArrayOES(self.vertexArray);
+
+    GLuint vertexBuffer;
+    glGenBuffers(1, &vertexBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(kVertices), kVertices, GL_STATIC_DRAW);
+
+    GLuint indexBuffer;
+    glGenBuffers(1, &indexBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(kIndices), kIndices, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(GLKVertexAttribPosition);
+    glVertexAttribPointer(GLKVertexAttribPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    glBindVertexArrayOES(0);
+
+    glUseProgram(self.programObject);
+
+    self.depthTextureUniform = glGetUniformLocation(self.programObject, "depthTexture");
+}
+
+- (void)updateScreenSize
+{
+    GLint screenSize = glGetUniformLocation(self.programObject, "screenSize");
+    if (screenSize >= 0) {
+        CGFloat scale = [UIScreen mainScreen].scale;
+        glUniform2f(screenSize, self.view.bounds.size.width * scale, self.view.bounds.size.height * scale);
+    }
+}
+
 - (void)updateDepthTextureWithData:(NSData *)data
 {
-    glGenTextures(1, &_depthTexture);
-    glBindTexture(GL_TEXTURE_2D, self.depthTexture);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 640, 480, 0, GL_LUMINANCE, GL_UNSIGNED_SHORT, data.bytes);
+    static GLfloat *correctedData = NULL;
+    static GLfloat divide = (GLfloat)((1 << 11) - 1);
+    if (!correctedData) {
+        correctedData = malloc(kDepthWidth * kDepthHeight * sizeof(GLfloat));
+    }
+
+    vDSP_vfltu16(data.bytes, 1, correctedData, 1, kDepthWidth * kDepthHeight);
+    vDSP_vsdiv(correctedData, 1, &divide, correctedData, 1, kDepthWidth * kDepthHeight);
+
+    if (self.depthTexture == 0) {
+        glGenTextures(1, &_depthTexture);
+        glBindTexture(GL_TEXTURE_2D, self.depthTexture);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        // Needed for NPOT textures
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, kDepthWidth, kDepthHeight, 0, GL_LUMINANCE, GL_FLOAT, correctedData);
+    } else {
+        glBindTexture(GL_TEXTURE_2D, self.depthTexture);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, kDepthWidth, kDepthHeight, GL_LUMINANCE, GL_FLOAT, correctedData);
+    }
 }
 
 #pragma mark - Web socket delegate
@@ -158,7 +313,9 @@
     hud.labelText = @"Failed to connect to server!";
     [hud hide:YES afterDelay:2];
 
-    [self searchForServers];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self searchForServers];
+    });
 }
 
 - (void)webSocket:(SRWebSocket *)webSocket didCloseWithCode:(NSInteger)code reason:(NSString *)reason wasClean:(BOOL)wasClean
@@ -171,7 +328,9 @@
     hud.labelText = @"Connection to server closed!";
     [hud hide:YES afterDelay:2];
 
-    [self searchForServers];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self searchForServers];
+    });
 }
 
 - (void)webSocket:(SRWebSocket *)webSocket didReceiveMessage:(id)message
@@ -185,7 +344,7 @@
         date = [NSDate date];
 
     NSData *data = message;
-    NSUInteger originalSize = 640 * 480 * sizeof(uint16_t);
+    int originalSize = kDepthWidth * kDepthHeight * sizeof(uint16_t);
     char *buffer = malloc(originalSize);
     if (LZ4_decompress_fast(data.bytes, buffer, originalSize) < 0) {
         NSLog(@"Decompression error!");
@@ -199,12 +358,14 @@
         NSTimeInterval timeInterval = -[date timeIntervalSinceNow];
         NSLog(@"%ld messages in %f seconds: %f messages/sec", messageCount, timeInterval, messageCount / timeInterval);
         NSLog(@"%ld bytes in %f seconds: %f kB/s", byteCount, timeInterval, byteCount / timeInterval / 1024.0);
-        NSLog(@"%ld bytes uncompressed into %ld bytes giving a %f%% compression", byteCount, uncompressedByteCount, 100.0 * uncompressedByteCount / (CGFloat)byteCount);
+        NSLog(@"%ld bytes uncompressed into %ld bytes giving a %f%% compression", byteCount, uncompressedByteCount, 100.0 * byteCount / (CGFloat)uncompressedByteCount);
         messageCount = 0;
         byteCount = 0;
         uncompressedByteCount = 0;
         date = [NSDate date];
     }
+
+    [self updateDepthTextureWithData:originalData];
 }
 
 #pragma mark - Net service delegate
@@ -212,7 +373,9 @@
 - (void)netServiceDidResolveAddress:(NSNetService *)sender
 {
     if (sender.addresses == 0) {
-        [self searchForServers];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [self searchForServers];
+        });
         return;
     }
 
@@ -225,7 +388,10 @@
 - (void)netService:(NSNetService *)sender didNotResolve:(NSDictionary *)errorDict
 {
     NSLog(@"Failed to resolve server");
-    [self searchForServers];
+
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self searchForServers];
+    });
 }
 
 #pragma mark - Net service browser delegate
@@ -239,12 +405,27 @@
     [self.kinectWebSocketService resolveWithTimeout:5];
 }
 
+#pragma mark - GLKViewController delegate
+
+- (void)glkViewControllerUpdate:(GLKViewController *)controller
+{
+    NSLog(@"UPDATE");
+}
+
 #pragma mark - GLKView delegate
 
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
-    glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    if (self.depthTexture > 0) {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, self.depthTexture);
+        glUniform1i(self.depthTextureUniform, 0);
+    }
+
+    glBindVertexArrayOES(self.vertexArray);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0);
 }
 
 @end

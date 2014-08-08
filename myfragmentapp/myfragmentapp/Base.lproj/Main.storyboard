@@ -1,72 +1,61 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="5056" systemVersion="13E28" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="5056" systemVersion="13E28" targetRuntime="iOS.CocoaTouch.iPad" propertyAccessControl="none" useAutolayout="YES" initialViewController="hnr-Ey-nSk">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="3733"/>
     </dependencies>
     <scenes>
-        <!--View Controller-->
-        <scene sceneID="tne-QT-ifu">
+        <!--GLKit View Controller-->
+        <scene sceneID="1zj-Me-80Z">
             <objects>
-                <viewController id="BYZ-38-t0r" customClass="FRGViewController" sceneMemberID="viewController">
+                <glkViewController autoresizesArchivedViewToFullSize="NO" preferredFramesPerSecond="30" id="hnr-Ey-nSk" customClass="FRGViewController" sceneMemberID="viewController">
                     <layoutGuides>
-                        <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
-                        <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
+                        <viewControllerLayoutGuide type="top" id="W6c-s7-1Np"/>
+                        <viewControllerLayoutGuide type="bottom" id="Q7a-Fl-rca"/>
                     </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
+                    <glkView key="view" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" id="VF1-C4-HLL">
                         <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <glkView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" drawableMultisample="4X" translatesAutoresizingMaskIntoConstraints="NO" id="EGV-zW-Sez">
-                                <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                <connections>
-                                    <outlet property="delegate" destination="BYZ-38-t0r" id="gfd-VD-1d4"/>
-                                </connections>
-                            </glkView>
-                            <label hidden="YES" opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="WqH-Cb-fmx" userLabel="Countdown Label">
+                            <label hidden="YES" opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="YwM-G4-6zC" userLabel="Countdown Label">
                                 <rect key="frame" x="384" y="512" width="0.0" height="0.0"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="300"/>
                                 <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <view hidden="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="kR5-tQ-C1M" userLabel="Flash View">
+                            <view hidden="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Abd-ge-xdu" userLabel="Flash View">
                                 <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                             </view>
                         </subviews>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <gestureRecognizers/>
                         <constraints>
-                            <constraint firstAttribute="bottom" secondItem="kR5-tQ-C1M" secondAttribute="bottom" id="2YM-mx-9tj"/>
-                            <constraint firstItem="EGV-zW-Sez" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="2cu-QG-oUg"/>
-                            <constraint firstAttribute="centerX" secondItem="WqH-Cb-fmx" secondAttribute="centerX" id="3b9-4Q-deW"/>
-                            <constraint firstItem="kR5-tQ-C1M" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="9pZ-Gd-asv"/>
-                            <constraint firstAttribute="trailing" secondItem="EGV-zW-Sez" secondAttribute="trailing" id="Mq3-d9-KhI"/>
-                            <constraint firstItem="kR5-tQ-C1M" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="Sdp-7E-c4V"/>
-                            <constraint firstAttribute="trailing" secondItem="kR5-tQ-C1M" secondAttribute="trailing" id="ddb-U3-0Eb"/>
-                            <constraint firstAttribute="centerY" secondItem="WqH-Cb-fmx" secondAttribute="centerY" id="ndz-2L-dwM"/>
-                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="EGV-zW-Sez" secondAttribute="bottom" id="oq5-kS-ORm"/>
-                            <constraint firstItem="EGV-zW-Sez" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="zDB-rt-MCN"/>
+                            <constraint firstItem="Abd-ge-xdu" firstAttribute="leading" secondItem="VF1-C4-HLL" secondAttribute="leading" id="0sZ-oM-dtx"/>
+                            <constraint firstItem="Abd-ge-xdu" firstAttribute="top" secondItem="VF1-C4-HLL" secondAttribute="top" id="A2P-M8-c4g"/>
+                            <constraint firstAttribute="centerY" secondItem="YwM-G4-6zC" secondAttribute="centerY" id="ZHK-61-mxF"/>
+                            <constraint firstAttribute="trailing" secondItem="Abd-ge-xdu" secondAttribute="trailing" id="cD5-bH-0z2"/>
+                            <constraint firstAttribute="bottom" secondItem="Abd-ge-xdu" secondAttribute="bottom" id="stL-gG-Tjz"/>
+                            <constraint firstAttribute="centerX" secondItem="YwM-G4-6zC" secondAttribute="centerX" id="v13-Nj-P4E"/>
                         </constraints>
                         <connections>
-                            <outletCollection property="gestureRecognizers" destination="MvD-zf-OLb" appends="YES" id="bU1-I4-AV0"/>
+                            <outlet property="delegate" destination="hnr-Ey-nSk" id="vcJ-BC-VUH"/>
+                            <outletCollection property="gestureRecognizers" destination="MvD-zf-OLb" appends="YES" id="2vI-Zv-FGf"/>
                         </connections>
-                    </view>
+                    </glkView>
                     <connections>
-                        <outlet property="countdownLabel" destination="WqH-Cb-fmx" id="q8X-iW-2cq"/>
-                        <outlet property="flashView" destination="kR5-tQ-C1M" id="OuD-RF-cs6"/>
-                        <outlet property="glView" destination="EGV-zW-Sez" id="OKy-ZB-HBq"/>
+                        <outlet property="countdownLabel" destination="YwM-G4-6zC" id="oAO-To-mWA"/>
+                        <outlet property="flashView" destination="Abd-ge-xdu" id="cIe-EH-S7m"/>
                     </connections>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+                </glkViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="ylB-n5-Yr8" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <tapGestureRecognizer id="MvD-zf-OLb">
                     <connections>
-                        <action selector="viewTapped:" destination="BYZ-38-t0r" id="v9H-d5-8uX"/>
+                        <action selector="viewTapped:" destination="hnr-Ey-nSk" id="A11-DF-MQg"/>
                     </connections>
                 </tapGestureRecognizer>
             </objects>
+            <point key="canvasLocation" x="64" y="-76"/>
         </scene>
     </scenes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">

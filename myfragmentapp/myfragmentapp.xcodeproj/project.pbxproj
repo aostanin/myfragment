@@ -16,6 +16,8 @@
 		70C0A75E199067C900111079 /* lz4.c in Sources */ = {isa = PBXBuildFile; fileRef = 70C0A75A199067C900111079 /* lz4.c */; };
 		70C0A75F199067C900111079 /* lz4hc.c in Sources */ = {isa = PBXBuildFile; fileRef = 70C0A75C199067C900111079 /* lz4hc.c */; };
 		70C0A7611990BCE900111079 /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 70C0A7601990BCE900111079 /* GLKit.framework */; };
+		70F54FFC19930B2F00351D85 /* shader.vert in Resources */ = {isa = PBXBuildFile; fileRef = 70F54FFB19930B2F00351D85 /* shader.vert */; };
+		70F54FFE19930B3B00351D85 /* shader.frag in Resources */ = {isa = PBXBuildFile; fileRef = 70F54FFD19930B3B00351D85 /* shader.frag */; };
 		829ADE9ACAA943F08F8262EE /* libPods-myfragmentapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 69AE7652BD2B45D280FCEAD3 /* libPods-myfragmentapp.a */; };
 /* End PBXBuildFile section */
 
@@ -48,6 +50,8 @@
 		70C0A75C199067C900111079 /* lz4hc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = lz4hc.c; sourceTree = "<group>"; };
 		70C0A75D199067C900111079 /* lz4hc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lz4hc.h; sourceTree = "<group>"; };
 		70C0A7601990BCE900111079 /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
+		70F54FFB19930B2F00351D85 /* shader.vert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = shader.vert; sourceTree = "<group>"; };
+		70F54FFD19930B3B00351D85 /* shader.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = shader.frag; sourceTree = "<group>"; };
 		96799E6AB02846768278EC29 /* Pods-myfragmentapp.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-myfragmentapp.xcconfig"; path = "Pods/Pods-myfragmentapp.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -96,13 +100,14 @@
 		70423A23198E76F60018326E /* myfragmentapp */ = {
 			isa = PBXGroup;
 			children = (
-				70C0A758199067A400111079 /* Libraries */,
 				70423A28198E76F60018326E /* FRGAppDelegate.h */,
 				70423A29198E76F60018326E /* FRGAppDelegate.m */,
 				70423A2B198E76F60018326E /* FRGViewController.h */,
 				70423A2C198E76F60018326E /* FRGViewController.m */,
-				70423A2E198E76F60018326E /* Main.storyboard */,
 				70423A31198E76F60018326E /* Images.xcassets */,
+				70C0A758199067A400111079 /* Libraries */,
+				70423A2E198E76F60018326E /* Main.storyboard */,
+				70F54FFA19930AF300351D85 /* Shaders */,
 				70423A24198E76F60018326E /* Supporting Files */,
 			);
 			path = myfragmentapp;
@@ -151,6 +156,15 @@
 				70C0A75D199067C900111079 /* lz4hc.h */,
 			);
 			path = lz4;
+			sourceTree = "<group>";
+		};
+		70F54FFA19930AF300351D85 /* Shaders */ = {
+			isa = PBXGroup;
+			children = (
+				70F54FFB19930B2F00351D85 /* shader.vert */,
+				70F54FFD19930B3B00351D85 /* shader.frag */,
+			);
+			path = Shaders;
 			sourceTree = "<group>";
 		};
 		99F83DC533DF4D0BB2FCCDF8 /* Frameworks */ = {
@@ -245,6 +259,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				70F54FFE19930B3B00351D85 /* shader.frag in Resources */,
+				70F54FFC19930B2F00351D85 /* shader.vert in Resources */,
 				70423A30198E76F60018326E /* Main.storyboard in Resources */,
 				70423A32198E76F60018326E /* Images.xcassets in Resources */,
 			);
@@ -369,7 +385,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -405,7 +421,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 2;
@@ -423,6 +439,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -436,6 +453,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};

@@ -43,6 +43,7 @@
                             <outletCollection property="gestureRecognizers" destination="MvD-zf-OLb" appends="YES" id="2vI-Zv-FGf"/>
                         </connections>
                     </glkView>
+                    <nil key="simulatedStatusBarMetrics"/>
                     <connections>
                         <outlet property="countdownLabel" destination="YwM-G4-6zC" id="oAO-To-mWA"/>
                         <outlet property="flashView" destination="Abd-ge-xdu" id="cIe-EH-S7m"/>

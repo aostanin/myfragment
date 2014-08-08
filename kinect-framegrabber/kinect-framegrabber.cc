@@ -9,15 +9,43 @@
 #include <unistd.h>
 
 #include <libfreenect/libfreenect.h>
+#include <cv.h>
+#include <opencv2/imgproc/imgproc.hpp>
+
+using namespace cv;
+
+static const int width = 640;
+static const int height = 480;
 
 freenect_context *f_ctx;
 freenect_device *f_dev;
 int fifo_fd;
 bool dummy;
+bool shouldBlur;
+
+void postprocess(uint16_t *depth)
+{
+  static Mat *fullsize = NULL;
+  static Mat *resized = NULL;
+  if (fullsize == NULL)
+    fullsize = new Mat(height, width, CV_16UC1, depth);
+  if (resized == NULL)
+    resized = new Mat(320, 240, CV_16UC1);
+
+  resize(*fullsize, *resized, Size(320, 240));
+
+  if (shouldBlur) {
+    blur(*resized, *resized, Size(9, 9));
+    blur(*resized, *resized, Size(9, 9));
+    blur(*resized, *resized, Size(9, 9));
+  }
+
+  write(fifo_fd, resized->data, 320 * 240 * sizeof(uint16_t));
+}
 
 void kinect_depth_callback(freenect_device *dev, void *v_depth, uint32_t timestamp)
 {
-  write(fifo_fd, v_depth, 640 * 480 * sizeof(uint16_t));
+  postprocess((uint16_t *)v_depth);
 }
 
 int kinect_init(void)
@@ -81,16 +109,16 @@ int dummy_loop(void)
   static uint16_t value = 0;
 
   if (buffer == NULL)
-    buffer = malloc(640 * 480 * sizeof(uint16_t));
+    buffer = (uint16_t *)malloc(width * height * sizeof(uint16_t));
 
-  for (int i = 0; i < 640 * 480; i++)
-    buffer[i] = value;
+  for (int i = 0; i < width * height; i++)
+    buffer[i] = (i / width / 20) / 24.0 * value;
 
-  write(fifo_fd, buffer, 640 * 480 * sizeof(uint16_t));
+  postprocess(buffer);
 
-  value++;
+  value += 5;
 
-  if (value >= 2 << 11)
+  if (value >= 1 << 11)
     value = 0;
 
   usleep(30000);
@@ -101,11 +129,15 @@ int dummy_loop(void)
 int main(int argc, char **argv)
 {
   dummy = false;
+  shouldBlur = false;
   char *fifo_fn = NULL;
 
   int c;
-  while ((c = getopt(argc, argv, "df:")) != -1) {
+  while ((c = getopt(argc, argv, "bdf:")) != -1) {
     switch (c) {
+      case 'b':
+        shouldBlur = true;
+        break;
       case 'd':
         dummy = true;
         break;
@@ -118,7 +150,7 @@ int main(int argc, char **argv)
   if (fifo_fn == NULL) {
     printf("%s - dump Kinect depth data to a fifo\n", argv[0]);
     printf("\n");
-    printf("Usage: %s [-d] -f fifo_file\n", argv[0]);
+    printf("Usage: %s [-b] [-d] -f fifo_file\n", argv[0]);
     return EXIT_FAILURE;
   }
 

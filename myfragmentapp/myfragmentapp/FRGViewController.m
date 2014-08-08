@@ -14,8 +14,8 @@
 #include <arpa/inet.h>
 #include "lz4.h"
 
-static const GLsizei kDepthWidth  = 640;
-static const GLsizei kDepthHeight = 480;
+static const GLsizei kDepthWidth  = 320;
+static const GLsizei kDepthHeight = 240;
 
 static const GLfloat kVertices[] = {
      1, -1,  1,
@@ -345,16 +345,11 @@ static const GLubyte kIndices[] = {
 
     NSData *data = message;
     int originalSize = kDepthWidth * kDepthHeight * sizeof(uint16_t);
-    char *buffer = malloc(originalSize);
-    if (LZ4_decompress_fast(data.bytes, buffer, originalSize) < 0) {
-        NSLog(@"Decompression error!");
-    }
-    NSData *originalData = [NSData dataWithBytesNoCopy:buffer length:originalSize];
-    uncompressedByteCount += originalData.length;
+    uncompressedByteCount += originalSize;
 
     messageCount++;
     byteCount += data.length;
-    if (messageCount >= 60) {
+    if (messageCount >= 120) {
         NSTimeInterval timeInterval = -[date timeIntervalSinceNow];
         NSLog(@"%ld messages in %f seconds: %f messages/sec", messageCount, timeInterval, messageCount / timeInterval);
         NSLog(@"%ld bytes in %f seconds: %f kB/s", byteCount, timeInterval, byteCount / timeInterval / 1024.0);
@@ -363,6 +358,15 @@ static const GLubyte kIndices[] = {
         byteCount = 0;
         uncompressedByteCount = 0;
         date = [NSDate date];
+    }
+
+    static char *buffer = NULL;
+    if (buffer == NULL)
+        buffer = malloc(originalSize);
+    NSData *originalData = [NSData dataWithBytesNoCopy:buffer length:originalSize freeWhenDone:NO];
+    if (LZ4_decompress_fast(data.bytes, buffer, originalSize) < 0) {
+        NSLog(@"Decompression error!");
+        return;
     }
 
     [self updateDepthTextureWithData:originalData];

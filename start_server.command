@@ -2,7 +2,7 @@
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-./kinect-framegrabber/build/kinect-framegrabber -f kinect.fifo &
+./kinect-framegrabber/build/kinect-framegrabber -b -f kinect.fifo &
 FRAMEGRABBER_PID=$!
 
 ./kinect-websocket/kinect-websocket --fifo kinect.fifo -p 9000 -l 0.0.0.0 &

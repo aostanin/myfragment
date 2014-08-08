@@ -7,6 +7,9 @@ var mdns = require('mdns');
 var LZ4 = require('lz4')
 var program = require('commander');
 
+var width = 320;
+var height = 240;
+
 program
   .version('0.0.1')
   .option('-f, --fifo <fifo>', 'Kinect FIFO')
@@ -23,6 +26,7 @@ wss.on('connection', function(ws) {
   console.log('New connection');
   ws.on('error', function() {
     console.log(arguments);
+    this.close();
   });
 });
 wss.on('error', function() {
@@ -35,7 +39,7 @@ fs.open(program.fifo, 'r', function(err, fd) {
     process.exit(1);
   }
 
-  var buffer = new Buffer(640 * 480 * 2);
+  var buffer = new Buffer(width * height * 2);
   var compressedBuffer = new Buffer(LZ4.encodeBound(buffer.length));
 
   function readAndSendChunk() {

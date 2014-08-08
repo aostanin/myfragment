@@ -339,6 +339,14 @@ static const GLubyte kIndices[] = {
     static unsigned long byteCount = 0;
     static unsigned long uncompressedByteCount = 0;
     static NSDate *date = nil;
+    static BOOL decompressing = NO;
+
+    if (decompressing) {
+        NSLog(@"Already decompressing previous packet, skipping");
+        return;
+    }
+
+    decompressing = YES;
 
     if (!date)
         date = [NSDate date];
@@ -364,12 +372,15 @@ static const GLubyte kIndices[] = {
     if (buffer == NULL)
         buffer = malloc(originalSize);
     NSData *originalData = [NSData dataWithBytesNoCopy:buffer length:originalSize freeWhenDone:NO];
-    if (LZ4_decompress_fast(data.bytes, buffer, originalSize) < 0) {
+    if (LZ4_decompress_safe(data.bytes, buffer, data.length, originalSize) < 0) {
         NSLog(@"Decompression error!");
+        decompressing = NO;
         return;
     }
 
     [self updateDepthTextureWithData:originalData];
+
+    decompressing = NO;
 }
 
 #pragma mark - Net service delegate

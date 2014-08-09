@@ -8,6 +8,7 @@
 
 #import "FRGViewController.h"
 #import <Accelerate/Accelerate.h>
+#import <OpenGLES/ES2/glext.h>
 #import <MBProgressHUD.h>
 #import <SRWebSocket.h>
 

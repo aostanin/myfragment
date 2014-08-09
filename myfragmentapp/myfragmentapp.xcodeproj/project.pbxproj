@@ -33,6 +33,7 @@
 
 /* Begin PBXFileReference section */
 		69AE7652BD2B45D280FCEAD3 /* libPods-myfragmentapp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-myfragmentapp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		7014A3E919960D66003A409D /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		70423A21198E76F60018326E /* myfragmentapp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = myfragmentapp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		70423A25198E76F60018326E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		70423A26198E76F60018326E /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -170,6 +171,7 @@
 		99F83DC533DF4D0BB2FCCDF8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				7014A3E919960D66003A409D /* OpenGLES.framework */,
 				70C0A7601990BCE900111079 /* GLKit.framework */,
 				69AE7652BD2B45D280FCEAD3 /* libPods-myfragmentapp.a */,
 			);

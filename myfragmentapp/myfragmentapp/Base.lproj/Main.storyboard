@@ -12,7 +12,7 @@
                         <viewControllerLayoutGuide type="top" id="W6c-s7-1Np"/>
                         <viewControllerLayoutGuide type="bottom" id="Q7a-Fl-rca"/>
                     </layoutGuides>
-                    <glkView key="view" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" id="VF1-C4-HLL">
+                    <glkView key="view" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" drawableColorFormat="RGB565" id="VF1-C4-HLL">
                         <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>

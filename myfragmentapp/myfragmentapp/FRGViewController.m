@@ -37,7 +37,8 @@ static const GLubyte kIndices[] = {
 @property (assign, nonatomic) GLuint programObject;
 @property (assign, nonatomic) GLuint vertexArray;
 @property (assign, nonatomic) GLuint depthTexture;
-@property (assign, nonatomic) GLuint depthTextureUniform;
+@property (assign, nonatomic) GLint depthTextureUniform;
+@property (assign, nonatomic) GLint timeUniform;
 
 @property (strong, nonatomic) NSNetServiceBrowser *kinectWebSocketServiceBrowser;
 @property (strong, nonatomic) NSNetService *kinectWebSocketService;
@@ -251,6 +252,7 @@ static const GLubyte kIndices[] = {
     glUseProgram(self.programObject);
 
     self.depthTextureUniform = glGetUniformLocation(self.programObject, "depthTexture");
+    self.timeUniform = glGetUniformLocation(self.programObject, "time");
 }
 
 - (void)updateScreenSize
@@ -372,7 +374,7 @@ static const GLubyte kIndices[] = {
     if (buffer == NULL)
         buffer = malloc(originalSize);
     NSData *originalData = [NSData dataWithBytesNoCopy:buffer length:originalSize freeWhenDone:NO];
-    if (LZ4_decompress_safe(data.bytes, buffer, data.length, originalSize) < 0) {
+    if (LZ4_decompress_safe(data.bytes, buffer, (int)data.length, originalSize) < 0) {
         NSLog(@"Decompression error!");
         decompressing = NO;
         return;
@@ -438,6 +440,9 @@ static const GLubyte kIndices[] = {
         glBindTexture(GL_TEXTURE_2D, self.depthTexture);
         glUniform1i(self.depthTextureUniform, 0);
     }
+
+    if (self.timeUniform >= 0)
+        glUniform1f(self.timeUniform, CACurrentMediaTime());
 
     glBindVertexArrayOES(self.vertexArray);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0);

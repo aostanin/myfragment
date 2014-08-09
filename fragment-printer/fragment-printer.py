@@ -25,9 +25,9 @@ def create_qr_code(url):
     for j, row in enumerate(qrcode.code):
         for i, item in enumerate(row):
             if item == 0:
-                image_data[i, j] = (0, 0, 0, 255)
+                image_data[j, i] = (255, 255, 255, 255)
             else:
-                image_data[i, j] = (255, 255, 255, 255)
+                image_data[j, i] = (0, 0, 0, 255)
 
     return QtGui.QImage(image_data, w, h, QtGui.QImage.Format_ARGB32)
 
@@ -51,10 +51,10 @@ def print_card(images, qrcode, url, card_size=(148, 100)):
     image_rect = QtCore.QRect(0, 0, page_rect.width() / 3, page_rect.height() / 2)
 
     for image in images:
-        image = image.scaled(image_rect.size(), QtCore.Qt.KeepAspectRatio)
+        scaled_image = image.scaled(image_rect.size(), QtCore.Qt.KeepAspectRatio)
         adjusted_rect = QtCore.QRect(image_rect)
-        adjusted_rect.setSize(image.size())
-        adjusted_rect.translate((image_rect.width() - image.width()) / 2, (image_rect.height() - image.height()) / 2)
+        adjusted_rect.setSize(scaled_image.size())
+        adjusted_rect.translate((image_rect.width() - scaled_image.width()) / 2, (image_rect.height() - scaled_image.height()) / 2)
         painter.drawImage(adjusted_rect, image)
 
         image_rect.translate(image_rect.width(), 0)

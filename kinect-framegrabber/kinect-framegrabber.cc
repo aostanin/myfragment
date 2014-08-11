@@ -72,11 +72,11 @@ int kinect_init(void)
 
   freenect_set_led(f_dev, LED_OFF);
 
-  freenect_set_flag(f_dev, FREENECT_MIRROR_DEPTH, FREENECT_ON);
   freenect_set_depth_callback(f_dev, kinect_depth_callback);
   freenect_set_depth_mode(f_dev, freenect_find_depth_mode(FREENECT_RESOLUTION_MEDIUM, FREENECT_DEPTH_MM));
 
   freenect_start_depth(f_dev);
+  freenect_set_flag(f_dev, FREENECT_MIRROR_DEPTH, FREENECT_ON);
 
   return 0;
 }

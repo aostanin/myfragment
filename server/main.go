@@ -2,10 +2,13 @@ package main
 
 import (
   "database/sql"
+  "encoding/binary"
   "io"
   "io/ioutil"
   "log"
+  "math"
   "net/http"
+  "os"
 
   _ "github.com/mattn/go-sqlite3"
   "github.com/coopernurse/gorp"
@@ -13,6 +16,8 @@ import (
   "github.com/go-martini/martini"
   "github.com/martini-contrib/gzip"
   "github.com/martini-contrib/render"
+
+  "code.google.com/p/go.net/websocket"
 )
 
 type Fragment struct {
@@ -28,7 +33,52 @@ type Fragment struct {
   Time                 float64 `db:time                     json:"time"`
 }
 
+var socketChan chan []byte = make(chan []byte)
+
+func readDepth(fifoPath string) {
+  log.Printf("Opening Kinect FIFO %s", fifoPath)
+  fifo, err := os.Open(fifoPath)
+
+  if err != nil {
+    log.Fatal(err)
+  }
+
+  const pixelCount = 320 * 240
+  const frameSizeUInt16 = pixelCount * 2
+  const frameSizeFloat32 = pixelCount * 4
+  buffer := make([]byte, frameSizeUInt16)
+  decodedFloat32Buffer := make([]byte, frameSizeFloat32)
+  for {
+    frameBytesRead := 0
+    for frameBytesRead < frameSizeUInt16 {
+      bytesRead, err := fifo.Read(buffer[frameBytesRead:])
+      frameBytesRead += bytesRead
+      if err != nil {
+        log.Fatal(err)
+      }
+    }
+
+    if frameBytesRead != frameSizeUInt16 {
+      log.Printf("Read %d bytes but expected %d bytes", frameBytesRead, frameSizeUInt16)
+      continue
+    }
+
+    for i := 0; i < pixelCount; i++ {
+      val16 := binary.LittleEndian.Uint16(buffer[2 * i:])
+      bits := math.Float32bits(float32(val16) / float32((1 << 11) - 1))
+      binary.LittleEndian.PutUint32(decodedFloat32Buffer[4*i:], uint32(bits))
+    }
+
+    socketChan <- decodedFloat32Buffer
+  }
+}
+
 func main() {
+  kinectFifo := os.Getenv("KINECT_FIFO")
+  if kinectFifo != "" {
+    go readDepth(kinectFifo)
+  }
+
   db, err := sql.Open("sqlite3", "db/myfragment.db")
   if err != nil {
     log.Fatal(err)
@@ -54,15 +104,31 @@ func main() {
     r.HTML(200, "home", nil)
   })
 
+  m.Get("/live", func(r render.Render) {
+    r.HTML(200, "live", nil)
+  })
+
   m.Get("/fragment/:fragment_id", func(r render.Render) {
     r.HTML(200, "fragment", nil)
   })
+
+  m.Get("/live-socket", websocket.Handler(func(ws *websocket.Conn) {
+    log.Print("Socket connection open")
+    for message := range socketChan {
+      err := websocket.Message.Send(ws, message)
+      if err != nil {
+        break
+      }
+    }
+    ws.Close()
+    log.Print("Socket connection closed")
+  }).ServeHTTP)
 
   m.Post("/api/upload.json", func(req *http.Request, r render.Render, dbmap *gorp.DbMap) {
     depthFile, _, err := req.FormFile("depth")
     if err != nil {
       r.JSON(400, map[string]interface{}{"success": false})
-      return;
+      return
     }
     defer depthFile.Close()
 
@@ -70,7 +136,7 @@ func main() {
     if err != nil {
       log.Print(err)
       r.JSON(400, map[string]interface{}{"success": false})
-      return;
+      return
     }
     defer outputDepthFile.Close()
 
@@ -78,7 +144,7 @@ func main() {
     if err != nil {
       log.Print(err)
       r.JSON(500, map[string]interface{}{"success": false})
-      return;
+      return
     }
 
     fragment := &Fragment{
@@ -93,7 +159,7 @@ func main() {
     if err != nil {
       log.Print(err)
       r.JSON(500, map[string]interface{}{"success": false})
-      return;
+      return
     }
 
     r.JSON(200, map[string]interface{}{"success": true})

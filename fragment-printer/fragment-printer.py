@@ -2,7 +2,9 @@
 
 import argparse
 import os
+import subprocess
 import sys
+import time
 
 import numpy
 import pyqrcode
@@ -37,13 +39,13 @@ def print_card(images, card_size=(148, 100)):
 
     printer = QtGui.QPrinter()
 
-    printer.setCopyCount(2)
+    #printer.setCopyCount(2)
     printer.setOrientation(QtGui.QPrinter.Landscape)
-    printer.setColorMode(QtGui.QPrinter.GrayScale)
-    printer.setPageMargins(0, 0, 0, 0, QtGui.QPrinter.Millimeter)
-    printer.setPaperSize(QtCore.QSize(card_size[1], card_size[0]), QtGui.QPrinter.Millimeter)
+    printer.setFullPage(True)
+    printer.setPaperSize(QtCore.QSize(card_size[0], card_size[1]), QtGui.QPrinter.Millimeter)
 
-    printer.setOutputFileName(os.path.dirname(__file__) + '/print.pdf')
+    fn = os.path.dirname(__file__) + '/print_' + time.strftime('%Y%m%d%H%M%S') + '.pdf'
+    printer.setOutputFileName(fn)
 
     painter = QtGui.QPainter()
     painter.begin(printer)
@@ -68,6 +70,9 @@ def print_card(images, card_size=(148, 100)):
             image_rect.moveLeft(0)
 
     painter.end()
+
+    subprocess.call
+    os.system('lpr -#2 -o landscape -o page-left=0 -o page-right=0 -o page-top=0 -o page-bottom=0 -o media=Custom.100x148mm -P Brother_HL_2270DW_series ' + fn)
 
 
 if __name__ == '__main__':

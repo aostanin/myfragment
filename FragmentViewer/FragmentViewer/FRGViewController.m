@@ -71,8 +71,8 @@
     activeImageView.alpha = 0;
     activeImageView.hidden = NO;
 
+    [activeImageView setImage:nil];
     [activeImageView setImageWithURL:[NSURL URLWithString:self.imageURLs[i]]];
-    [inactiveImageView setImage:nil];
 
     [UIView animateWithDuration:1 animations:^{
         activeImageView.alpha = 1;

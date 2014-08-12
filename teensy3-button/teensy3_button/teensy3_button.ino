@@ -3,7 +3,7 @@ void setup() {
 }
 
 void loop() {
-  if (digitalRead(0)) {
+  if (digitalRead(0) == 0p) {
     Keyboard.print('p');
     delay(3000);
   }

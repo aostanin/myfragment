@@ -1,3 +1,4 @@
+<div id="overlay"></div>
 <canvas id="live-canvas"></canvas>
 
 <script id="vs" type="x-shader/x-vertex">
@@ -92,6 +93,8 @@ void main(void) {
   var uniforms;
   var startTime;
   var canvas;
+  var controls;
+  var overlay;
 
   var depthTextureBuffer = null;
 
@@ -101,6 +104,7 @@ void main(void) {
   function init() {
     startTime = Date.now();
     canvas = document.getElementById('live-canvas');
+    overlay = document.getElementById('overlay');
 
     camera = new THREE.Camera();
     camera.position.z = 1;
@@ -124,11 +128,113 @@ void main(void) {
 
     var mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
-    renderer = new THREE.WebGLRenderer({ 'canvas': canvas });
+    renderer = new THREE.WebGLRenderer({
+      canvas: canvas,
+      preserveDrawingBuffer: true
+    });
     renderer.setClearColor(0xffffff, 1);
 
     onWindowResize();
     window.addEventListener('resize', onWindowResize, false);
+
+    controls = new function() {
+      this.depthFar = uniforms.depthFar.value;
+    };
+
+    var gui = new dat.GUI();
+    gui.add(controls, 'depthFar', 0.0, 1.0);
+
+    document.addEventListener('keydown', function(e) {
+      if (e.keyCode == 70) { // 'f' key
+        if (!document.fullscreenElement &&
+            !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement ) {
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+          } else if (document.documentElement.msRequestFullscreen) {
+            document.documentElement.msRequestFullscreen();
+          } else if (document.documentElement.mozRequestFullScreen) {
+            document.documentElement.mozRequestFullScreen();
+          } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+          }
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+        }
+      } else if (e.keyCode == 80) { // 'p' key
+        takepics();
+      }
+    }, false);
+
+    function countdown(count, callback) {
+      overlay.style.opacity = 0;
+      overlay.textContent = count;
+      var done = function() {
+        count--;
+        overlay.style.opacity = 0;
+        if (count <= 0) {
+          overlay.textContent = '';
+          callback();
+        } else {
+          overlay.textContent = count;
+          $(overlay).fadeTo(1000, 1, done);
+        }
+      };
+      $(overlay).fadeTo(1000, 1, done);
+    }
+
+    function flash(callback) {
+      overlay.style.opacity = 0;
+      overlay.style.backgroundColor = 'white';
+      $(overlay).fadeTo(250, 1, function() {
+        $(overlay).fadeTo(250, 0, function() {
+          overlay.style.backgroundColor = 'transparent';
+          callback();
+        });
+      });
+    }
+
+    function takepic(count, callback) {
+      var dataUrl = renderer.domElement.toDataURL("image/png");
+      countdown(count, function() {
+        flash(function() {
+          callback(dataUrl);
+        });
+      });
+    }
+
+    function takepics() {
+      var imgs = [];
+      var callback = function(d) {
+        console.log(d);
+        imgs.push(d);
+        if (imgs.length < 5) {
+          takepic(1, callback);
+        } else {
+          sendpics(imgs);
+        }
+      };
+      takepic(3,callback);
+    }
+
+    function sendpics(imgs) {
+      $.post("/api/upload.json", {
+        'images[]': imgs
+      }, function(data, status) {
+        console.log(data);
+      });
+    }
+
+    canvas.onclick = function() {
+      takepics();
+    };
   }
 
   function onWindowResize(e) {
@@ -138,6 +244,9 @@ void main(void) {
     uniforms.resolution.value.y = height;
 
     renderer.setSize(width, height, false);
+
+    overlay.style.lineHeight = window.innerHeight + 'px';
+    overlay.style.fontSize = window.innerHeight + 'px';
   }
 
   function animate() {
@@ -152,6 +261,9 @@ void main(void) {
       texture.magFilter = THREE.NearestFilter;
       texture.needsUpdate = true;
       uniforms.depthTexture.value = texture;
+    }
+    if (controls.depthFar != uniforms.depthFar.value) {
+      uniforms.depthFar.value = controls.depthFar;
     }
     uniforms.time.value = (Date.now() - startTime) / 1000;
     renderer.render(scene, camera);

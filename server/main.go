@@ -3,12 +3,15 @@ package main
 import (
   "database/sql"
   "encoding/binary"
-  "io"
+  "fmt"
   "io/ioutil"
   "log"
   "math"
   "net/http"
   "os"
+  "os/exec"
+  "strings"
+  "time"
 
   _ "github.com/mattn/go-sqlite3"
   "github.com/coopernurse/gorp"
@@ -18,6 +21,8 @@ import (
   "github.com/martini-contrib/render"
 
   "code.google.com/p/go.net/websocket"
+
+  "github.com/vincent-petithory/dataurl"
 )
 
 type Fragment struct {
@@ -125,44 +130,57 @@ func main() {
   }).ServeHTTP)
 
   m.Post("/api/upload.json", func(req *http.Request, r render.Render, dbmap *gorp.DbMap) {
-    depthFile, _, err := req.FormFile("depth")
-    if err != nil {
-      r.JSON(400, map[string]interface{}{"success": false})
-      return
-    }
-    defer depthFile.Close()
-
-    outputDepthFile, err := ioutil.TempFile("public/uploads/depth", "")
+    err := req.ParseForm()
     if err != nil {
       log.Print(err)
       r.JSON(400, map[string]interface{}{"success": false})
       return
     }
-    defer outputDepthFile.Close()
 
-    _, err = io.Copy(outputDepthFile, depthFile)
-    if err != nil {
-      log.Print(err)
-      r.JSON(500, map[string]interface{}{"success": false})
+    imageDataUrls := req.PostForm["images[]"]
+    if len(imageDataUrls) != 5 {
+      log.Printf("Expected 5 images but found %d", len(imageDataUrls))
+      r.JSON(400, map[string]interface{}{"success": false})
       return
     }
 
-    fragment := &Fragment{
-      Hash: "xxx",
-      Created: 0,
-      DepthVideoFilename: "depth",
-      PreviewImageFilename: "preview_img",
-      PreviewVideoFilename: "preview_vid",
-      Time: 0,
+    t := time.Now()
+    commandString := fmt.Sprintf("../fragment-printer/fragment-printer.py -i ")
+    for i := 0; i < len(imageDataUrls); i++ {
+      fn := fmt.Sprintf("public/uploads/images/%s_%d.png", t.Format("20060102150405"), i + 1)
+      commandString = fmt.Sprintf("%s %s", commandString, fn)
+      dataUrl, err := dataurl.DecodeString(imageDataUrls[i])
+      if err != nil {
+        log.Print(err)
+        r.JSON(500, map[string]interface{}{"success": false})
+      }
+      ioutil.WriteFile(fn, dataUrl.Data, 0644)
     }
-    err = dbmap.Insert(fragment)
-    if err != nil {
-      log.Print(err)
-      r.JSON(500, map[string]interface{}{"success": false})
-      return
-    }
+
+    printCmd := exec.Command("sh", "-c", commandString)
+    printCmd.Start()
 
     r.JSON(200, map[string]interface{}{"success": true})
+  })
+
+  m.Get("/api/fragments.json", func(req *http.Request, r render.Render) {
+    files, err := ioutil.ReadDir("public/uploads/images/")
+    if err != nil {
+      log.Print(err)
+      r.JSON(400, map[string]interface{}{"success": false})
+      return
+    }
+
+    var urls []string
+
+    for _, v := range files {
+      if !strings.HasSuffix(v.Name(), ".png") {
+        continue
+      }
+      urls = append(urls, fmt.Sprintf("http://%s/uploads/images/%s", req.Host, v.Name()))
+    }
+
+    r.JSON(200, map[string]interface{}{"success": true, "fragments": urls})
   })
 
   m.Run()

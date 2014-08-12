@@ -2,7 +2,6 @@
 
 import argparse
 import os
-import subprocess
 import sys
 import time
 
@@ -53,6 +52,10 @@ def print_card(images, card_size=(148, 100)):
     page_rect = printer.pageRect()
     image_rect = QtCore.QRect(0, 0, page_rect.width() / 3, page_rect.height() / 2)
 
+    rects = []
+
+    images.append(QtGui.QImage(os.path.dirname(__file__) + '/logo.png'))
+
     for image in images:
         scaled_image = image.scaled(image_rect.size(), QtCore.Qt.KeepAspectRatio)
         adjusted_rect = QtCore.QRect(image_rect)
@@ -63,16 +66,37 @@ def print_card(images, card_size=(148, 100)):
             dy = image_rect.height() - scaled_image.height()
         adjusted_rect.translate((image_rect.width() - scaled_image.width()) / 2, dy)
         painter.drawImage(adjusted_rect, image)
+        rects.append(adjusted_rect)
 
         image_rect.translate(image_rect.width(), 0)
         if image_rect.right() > page_rect.width():
             image_rect.moveTop(image_rect.height())
             image_rect.moveLeft(0)
 
+    subtitleFont = QtGui.QFont()
+    subtitleFont.setFamily('Helvetica Neue')
+    subtitleFont.setPixelSize(8)
+    subtitleFont.setWeight(QtGui.QFont.Normal)
+
+    painter.setFont(subtitleFont)
+
+    dateRect = rects[3]
+    dateRect.moveLeft(dateRect.left() + 2)
+    dateRect.moveTop(dateRect.bottom() + 2)
+    dateRect.setHeight(10)
+
+    painter.drawText(dateRect, time.strftime('%Y/%m/%d'))
+
+    urlRect = rects[4]
+    urlRect.moveLeft(urlRect.left() + 2)
+    urlRect.moveTop(urlRect.bottom() + 2)
+    urlRect.setHeight(10)
+
+    painter.drawText(urlRect, 'kaigoto.com')
+
     painter.end()
 
-    subprocess.call
-    os.system('lpr -#2 -o landscape -o page-left=0 -o page-right=0 -o page-top=0 -o page-bottom=0 -o media=Custom.100x148mm -P Brother_HL_2270DW_series ' + fn)
+    #os.system('lpr -#2 -o landscape -o page-left=0 -o page-right=0 -o page-top=0 -o page-bottom=0 -o media=Custom.100x148mm -P Brother_HL_2270DW_series ' + fn)
 
 
 if __name__ == '__main__':

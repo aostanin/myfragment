@@ -96,7 +96,7 @@ def print_card(images, card_size=(148, 100)):
 
     painter.end()
 
-    #os.system('lpr -#2 -o landscape -o page-left=0 -o page-right=0 -o page-top=0 -o page-bottom=0 -o media=Custom.100x148mm -P Brother_HL_2270DW_series ' + fn)
+    os.system('lpr -#2 -o landscape -o page-left=0 -o page-right=0 -o page-top=0 -o page-bottom=0 -o media=Custom.100x148mm -P Brother_HL_2270DW_series ' + fn)
 
 
 if __name__ == '__main__':

@@ -95,6 +95,7 @@ void main(void) {
   var canvas;
   var controls;
   var overlay;
+  var capturer;
 
   var depthTextureBuffer = null;
 
@@ -144,6 +145,8 @@ void main(void) {
     var gui = new dat.GUI();
     gui.add(controls, 'depthFar', 0.0, 1.0);
 
+    capturer = new CCapture();
+
     document.addEventListener('keydown', function(e) {
       if (e.keyCode == 70) { // 'f' key
         if (!document.fullscreenElement &&
@@ -170,6 +173,8 @@ void main(void) {
         }
       } else if (e.keyCode == 80) { // 'p' key
         takepics();
+      } else if (e.keyCode == 82) { // 'r' key
+        record();
       }
     }, false);
 
@@ -235,6 +240,21 @@ void main(void) {
     canvas.onclick = function() {
       takepics();
     };
+
+    function record() {
+      canvas.style.width = '640px';
+      canvas.style.height = '480px';
+
+      uniforms.resolution.value.x = 1290;
+      uniforms.resolution.value.y = 480;
+      renderer.setSize(640, 480, false);
+
+      capturer.start();
+      setTimeout(function() {
+        var videoURL = capturer.save();
+        window.open(videoURL);
+      }, 15000);
+    };
   }
 
   function onWindowResize(e) {
@@ -267,6 +287,8 @@ void main(void) {
     }
     uniforms.time.value = (Date.now() - startTime) / 1000;
     renderer.render(scene, camera);
+
+    capturer.capture(canvas);
   }
 
   var socket = new WebSocket('ws://' + window.location.host + '/live-socket');
